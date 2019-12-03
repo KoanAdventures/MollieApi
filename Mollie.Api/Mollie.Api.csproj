@@ -4,11 +4,12 @@
     <TargetFrameworks>netstandard1.2;net45</TargetFrameworks>
     <Version>2.0.6.1</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Authors>Vincent Kok</Authors>
+    <Authors>Vincent Kok, Alex Allen</Authors>
     <Description>This is a wrapper for the Mollie REST webservice. All payment methods and webservice calls are supported.</Description>
     <Company>Vincent Kok</Company>
     <Product>Mollie Payment API</Product>
-    <PackageProjectUrl>https://github.com/Viincenttt/MollieApi</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/KoanAdventures/MollieApi</PackageProjectUrl>
+    <PackageId>MollieApiSdk</PackageId>
     <PackageTags>Mollie</PackageTags>
     <AssemblyVersion>2.0.6.1</AssemblyVersion>
     <FileVersion>2.0.6.1</FileVersion>
@@ -23,13 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.1" />
   </ItemGroup>
 
   <ItemGroup>

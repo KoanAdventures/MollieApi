@@ -1,0 +1,20 @@
+variables:
+  DOCKER_DRIVER: overlay2
+
+default:
+  image: mcr.microsoft.com/dotnet/core/sdk:2.2.301-alpine
+
+stages:
+  - build
+
+variables:
+  DOTNET_CONFIGURATION: "Release"
+  PACKAGE_VERSION: "2.2.2"
+
+build:
+  stage: build
+  script: 
+    - dotnet build Mollie.Api -c $DOTNET_CONFIGURATION
+    - dotnet pack Mollie.Api -c $DOTNET_CONFIGURATION /p:Version=$PACKAGE_VERSION
+    - dotnet nuget push **/MollieApiSdk.*.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
+
