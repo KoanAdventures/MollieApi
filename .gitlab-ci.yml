@@ -15,6 +15,6 @@ build:
   stage: build
   script: 
     - dotnet build Mollie.Api -c $DOTNET_CONFIGURATION -f netstandard1.2
-    - dotnet pack Mollie.Api -c $DOTNET_CONFIGURATION /p:Version=$PACKAGE_VERSION
+    - dotnet pack Mollie.Api -c $DOTNET_CONFIGURATION /p:Version=$PACKAGE_VERSION --no-build
     - dotnet nuget push **/MollieApiSdk.*.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
 
