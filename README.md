@@ -1,5 +1,8 @@
 # MollieApi
 
+_Note: This version uses a lower version of Newtonsoft.JSON, and is therefore compatible with Azure Functions_
+
+
 This project allows you to easily add the [Mollie payment provider](https://www.mollie.com) to your application. Mollie has excellent [documentation](https://www.mollie.com/nl/docs/overzicht) which I highly recommend you read before using this library. Please keep in mind that this is a 3rd party library and I am in no way associated with Mollie. 
 
 If you have encounter any issues while using this library or have any feature requests, feel free to open an issue on GitHub. 
