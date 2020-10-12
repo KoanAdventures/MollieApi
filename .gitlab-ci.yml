@@ -1,15 +1,13 @@
 variables:
   DOCKER_DRIVER: overlay2
+  DOTNET_CONFIGURATION: "Release"
+  PACKAGE_VERSION: "2.3.0"
 
 default:
   image: mcr.microsoft.com/dotnet/core/sdk:2.2.301-alpine
 
 stages:
   - build
-
-variables:
-  DOTNET_CONFIGURATION: "Release"
-  PACKAGE_VERSION: "2.2.2"
 
 build:
   stage: build
