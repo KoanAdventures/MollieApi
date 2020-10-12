@@ -25,12 +25,12 @@ namespace Mollie.Api.Models.Subscription {
         ///  The subscription's date and time of creation, in ISO 8601 format.
         /// </summary>
         public DateTime CreatedAt { get; set; }
-        
+
         /// <summary>
         /// The subscription's current status, depends on whether the customer has a pending, valid or invalid mandate.
+        /// See the Mollie.Api.Models.Subscription.SubscriptionStatus class for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public SubscriptionStatus Status { get; set; }
+        public string Status { get; set; }
         
         /// <summary>
         /// The constant amount that is charged with each subscription payment.
@@ -66,10 +66,10 @@ namespace Mollie.Api.Models.Subscription {
 
         /// <summary>
         /// The payment method used for this subscription, either forced on creation by specifying the method parameter, or
-        /// null if any of the customer's valid mandates may be used.
+        /// null if any of the customer's valid mandates may be used. See the Mollie.Api.Models.Payment.PaymentMethod class
+        /// for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public Payment.PaymentMethod? Method { get; set; }
+        public string Method { get; set; }
 
         /// <summary>
         /// The subscription's date of cancellation, in ISO 8601 format.
@@ -93,6 +93,12 @@ namespace Mollie.Api.Models.Subscription {
         /// </summary>
         [JsonProperty("_links")]
         public SubscriptionResponseLinks Links { get; set; }
+
+        /// <summary>
+        /// Adding an application fee allows you to charge the merchant for each payment in the subscription and 
+        /// transfer these amounts to your own account.
+        /// </summary>
+        public ApplicationFee ApplicationFee { get; set; }
 
         public T GetMetadata<T>(JsonSerializerSettings jsonSerializerSettings = null) {
             return JsonConvert.DeserializeObject<T>(this.Metadata, jsonSerializerSettings);

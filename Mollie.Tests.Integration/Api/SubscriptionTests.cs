@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Mollie.Api.Client;
 using Mollie.Api.Models;
 using Mollie.Api.Models.Customer;
 using Mollie.Api.Models.List;
-
 using Mollie.Api.Models.Mandate;
-using Mollie.Api.Models.Payment.Request;
-using Mollie.Api.Models.Payment.Response;
 using Mollie.Api.Models.Subscription;
 using Mollie.Tests.Integration.Framework;
 using NUnit.Framework;
@@ -16,7 +12,7 @@ using NUnit.Framework;
 namespace Mollie.Tests.Integration.Api {
     [TestFixture]
     public class SubscriptionTests : BaseMollieApiTestClass {
-        [Test]
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanRetrieveSubscriptionList() {
             // Given
             string customerId = await this.GetFirstCustomerWithValidMandate();
@@ -29,7 +25,19 @@ namespace Mollie.Tests.Integration.Api {
             Assert.IsNotNull(response.Items);
         }
 
-        [Test]
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
+        public async Task CanRetrieveAllSubscriptionList() {
+            // Given
+
+            // When: Retrieve subscription list with default settings
+            ListResponse<SubscriptionResponse> response = await this._subscriptionClient.GetAllSubscriptionList();
+
+            // Then
+            Assert.IsNotNull(response);
+            Assert.IsNotNull(response.Items);
+        }
+
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task ListSubscriptionsNeverReturnsMoreCustomersThenTheNumberOfRequestedSubscriptions() {
             // Given: Number of customers requested is 5
             string customerId = await this.GetFirstCustomerWithValidMandate();
@@ -42,7 +50,7 @@ namespace Mollie.Tests.Integration.Api {
             Assert.IsTrue(response.Items.Count <= numberOfSubscriptions);
         }
 
-        [Test]
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreateSubscription() {
             // Given
             string customerId = await this.GetFirstCustomerWithValidMandate();
@@ -67,7 +75,7 @@ namespace Mollie.Tests.Integration.Api {
             Assert.AreEqual(subscriptionRequest.StartDate.Value.Date, subscriptionResponse.StartDate);
         }
 
-        [Test]
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCancelSubscription() {
             // Given
             string customerId = await this.GetFirstCustomerWithValidMandate();
@@ -87,7 +95,7 @@ namespace Mollie.Tests.Integration.Api {
             }
         }
 
-        [Test]
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanUpdateSubscription() {
             // Given 
             string customerId = await this.GetFirstCustomerWithValidMandate();
@@ -109,7 +117,7 @@ namespace Mollie.Tests.Integration.Api {
             }
         }
 
-        [Test]
+        [Test][RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreateSubscriptionWithMetaData() {
             // If: We create a subscription with meta data
             string json = "{\"order_id\":\"4.40\"}";
@@ -127,7 +135,7 @@ namespace Mollie.Tests.Integration.Api {
             SubscriptionResponse result = await this._subscriptionClient.CreateSubscriptionAsync(customerId, subscriptionRequest);
 
             // Then: Make sure we get the same json result as metadata
-            Assert.AreEqual(json, result.Metadata);
+            Assert.IsTrue(this.IsJsonResultEqual(json, result.Metadata));
         }
 
         public async Task<string> GetFirstCustomerWithValidMandate() {

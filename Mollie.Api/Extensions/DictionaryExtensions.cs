@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Mollie.Tests.Integration")]
 namespace Mollie.Api.Extensions {
-    internal static class DictionaryExtensions {
+    public static class DictionaryExtensions {
         public static string ToQueryString(this IDictionary<string, string> parameters) {
             if (!parameters.Any()) {
                 return string.Empty;
@@ -17,6 +17,12 @@ namespace Mollie.Api.Extensions {
         public static void AddValueIfNotNullOrEmpty(this IDictionary<string, string> dictionary, string key, string value) {
             if (!string.IsNullOrEmpty(value)) {
                 dictionary.Add(key, value);
+            }
+        }
+
+        public static void AddValueIfTrue(this IDictionary<string, string> dictionary, string key, bool value) {
+            if (value) {
+                dictionary.Add(key, value.ToString().ToLower());
             }
         }
     }

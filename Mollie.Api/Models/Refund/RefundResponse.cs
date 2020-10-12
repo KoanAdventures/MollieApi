@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Mollie.Api.JsonConverters;
 using Mollie.Api.Models.Order;
 using Newtonsoft.Json;
 
@@ -34,9 +35,10 @@ namespace Mollie.Api.Models.Refund {
         public string Description { get; set; }
 
         /// <summary>
-        /// Since refunds may be delayed for certain payment methods, the refund carries a status field.
+        /// Since refunds may be delayed for certain payment methods, the refund carries a status field. See the 
+        /// Mollie.Api.Models.Refund.RefundStatus class for a full list of known values.
         /// </summary>
-        public RefundStatus Status { get; set; }
+        public string Status { get; set; }
 
         /// <summary>
         /// An array of order line objects as described in Get order. Only available if the refund was created via the
@@ -59,6 +61,7 @@ namespace Mollie.Api.Models.Refund {
         /// Provide any data you like, for example a string or a JSON object. We will save the data alongside the refund. Whenever 
         /// you fetch the refund with our API, we’ll also include the metadata. You can use up to approximately 1kB.
         /// </summary>
+        [JsonConverter(typeof(RawJsonConverter))]
         public string Metadata { get; set; }
 
         /// <summary>

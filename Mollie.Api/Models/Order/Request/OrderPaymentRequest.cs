@@ -4,9 +4,10 @@
         /// Normally, a payment method screen is shown. However, when using this parameter, you can choose a 
         /// specific payment method and your customer will skip the selection screen and is sent directly to 
         /// the chosen payment method. The parameter enables you to fully integrate the payment method 
-        /// selection into your website.
+        /// selection into your website. See the Mollie.Api.Models.Payment.PaymentMethod class for a full 
+        /// list of known values.
         /// </summary>
-        public Payment.PaymentMethod? Method { get; set; }
+        public string Method { get; set; }
 
         /// <summary>
         /// The ID of the Customer for whom the payment is being created. This is used for recurring payments

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Mollie.Api.JsonConverters;
+using Newtonsoft.Json;
+using System;
 
 namespace Mollie.Api.Models.Order {
     public class OrderLineResponse : OrderLineRequest {
@@ -8,9 +10,10 @@ namespace Mollie.Api.Models.Order {
         public string Id { get; set; }
 
         /// <summary>
-        /// Status of the order line
+        /// Status of the order line - See the Mollie.Api.Models.Order.OrderLineStatus class for 
+        /// a full list of known values.
         /// </summary>
-        public OrderLineStatus Status { get; set; }
+        public string Status { get; set; }
 
         /// <summary>
         /// Whether or not the order line can be (partially) canceled.

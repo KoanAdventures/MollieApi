@@ -14,22 +14,27 @@ namespace Mollie.Api.Client {
 
 	    public PaymentClient(string apiKey, HttpClient httpClient = null) : base(apiKey, httpClient) { }
 
-        public async Task<PaymentResponse> CreatePaymentAsync(PaymentRequest paymentRequest) {
+        public async Task<PaymentResponse> CreatePaymentAsync(PaymentRequest paymentRequest, bool includeQrCode = false) {
             if (!string.IsNullOrWhiteSpace(paymentRequest.ProfileId) || paymentRequest.Testmode.HasValue || paymentRequest.ApplicationFee != null) {
                 this.ValidateApiKeyIsOauthAccesstoken();
             }
 
-            return await this.PostAsync<PaymentResponse>("payments", paymentRequest).ConfigureAwait(false);
+            var queryParameters = this.BuildQueryParameters(
+                includeQrCode: includeQrCode);
+
+            return await this.PostAsync<PaymentResponse>($"payments{queryParameters.ToQueryString()}", paymentRequest).ConfigureAwait(false);
         }
 
-	    public async Task<PaymentResponse> GetPaymentAsync(string paymentId, bool testmode = false) {
+	    public async Task<PaymentResponse> GetPaymentAsync(string paymentId, bool testmode = false, bool includeQrCode = false, bool includeRemainderDetails = false) {
 	        if (testmode) {
 	            this.ValidateApiKeyIsOauthAccesstoken();
             }
 
-		    var testmodeParameter = testmode ? "?testmode=true" : string.Empty;
-
-			return await this.GetAsync<PaymentResponse>($"payments/{paymentId}{testmodeParameter}").ConfigureAwait(false);
+            var queryParameters = this.BuildQueryParameters(
+                testmode: testmode, 
+                includeQrCode: includeQrCode, 
+                includeRemainderDetails: includeRemainderDetails);
+			return await this.GetAsync<PaymentResponse>($"payments/{paymentId}{queryParameters.ToQueryString()}").ConfigureAwait(false);
 		}
 
 		public async Task DeletePaymentAsync(string paymentId) {
@@ -44,16 +49,39 @@ namespace Mollie.Api.Client {
             return await this.GetAsync(url).ConfigureAwait(false);
         }
 
-        public async Task<ListResponse<PaymentResponse>> GetPaymentListAsync(string from = null, int? limit = null, string profileId = null, bool? testMode = null) {
-	        if (!string.IsNullOrWhiteSpace(profileId) || testMode.HasValue) {
+        public async Task<ListResponse<PaymentResponse>> GetPaymentListAsync(string from = null, int? limit = null, string profileId = null, bool testmode = false, bool includeQrCode = false) {
+	        if (!string.IsNullOrWhiteSpace(profileId) || testmode) {
 	            this.ValidateApiKeyIsOauthAccesstoken();
             }
 
-		    var parameters = new Dictionary<string, string>();
+            var queryParameters = this.BuildQueryParameters(
+                profileId: profileId,
+                testmode: testmode,
+                includeQrCode: includeQrCode);
+            var parameters = new Dictionary<string, string>();
             parameters.AddValueIfNotNullOrEmpty(nameof(profileId), profileId);
-            parameters.AddValueIfNotNullOrEmpty(nameof(testMode), Convert.ToString(testMode).ToLower());
+            parameters.AddValueIfNotNullOrEmpty(nameof(testmode), Convert.ToString(testmode).ToLower());
 
-			return await this.GetListAsync<ListResponse<PaymentResponse>>($"payments", from, limit, parameters).ConfigureAwait(false);
-		}        
+			return await this.GetListAsync<ListResponse<PaymentResponse>>($"payments", from, limit, queryParameters).ConfigureAwait(false);
+		}
+
+        public async Task<PaymentResponse> UpdatePaymentAsync(string paymentId, PaymentUpdateRequest paymentUpdateRequest) {
+            return await this.PatchAsync<PaymentResponse>($"payments/{paymentId}", paymentUpdateRequest).ConfigureAwait(false);
+        }
+
+        private Dictionary<string, string> BuildQueryParameters(string profileId = null, bool testmode = false, bool includeQrCode = false, bool includeRemainderDetails = false) {
+            var result = new Dictionary<string, string>();
+            result.AddValueIfTrue(nameof(testmode), testmode);
+            result.AddValueIfNotNullOrEmpty(nameof(profileId), profileId);
+            result.AddValueIfNotNullOrEmpty("include", this.BuildIncludeParameter(includeQrCode, includeRemainderDetails));
+            return result;
+        }
+
+        private string BuildIncludeParameter(bool includeQrCode = false, bool includeRemainderDetails = false) {
+            var includeList = new List<string>();
+            includeList.AddValueIfTrue("details.qrCode", includeQrCode);
+            includeList.AddValueIfTrue("details.remainderDetails", includeRemainderDetails);
+            return includeList.ToIncludeParameter();
+        }
     }
 }

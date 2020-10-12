@@ -1,6 +1,7 @@
 ﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Mollie.Api.Client.Abstract;
+using Mollie.Api.Models.Capture;
 using Mollie.Api.Models.Chargeback;
 using Mollie.Api.Models.List;
 using Mollie.Api.Models.Payment.Response;
@@ -9,7 +10,7 @@ using Mollie.Api.Models.Settlement;
 using Mollie.Api.Models.Url;
 
 namespace Mollie.Api.Client {
-    public class SettlementsClient : OauthBaseMollieClient, ISettlementsClient {
+    public class SettlementsClient : BaseMollieClient, ISettlementsClient {
         public SettlementsClient(string oauthAccessToken, HttpClient httpClient = null) : base(oauthAccessToken, httpClient) {
         }
 
@@ -44,6 +45,10 @@ namespace Mollie.Api.Client {
 
         public async Task<SettlementResponse> GetSettlementAsync(UrlObjectLink<SettlementResponse> url) {
             return await this.GetAsync(url).ConfigureAwait(false);
+        }
+
+        public async Task<ListResponse<CaptureResponse>> ListSettlementCapturesAsync(string settlementId) {
+            return await this.GetListAsync<ListResponse<CaptureResponse>>($"settlements/{settlementId}/captures", null, null).ConfigureAwait(false);
         }
     }
 }

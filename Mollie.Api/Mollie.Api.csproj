@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.2</TargetFrameworks>
-    <Version>2.0.6.1</Version>
+    <TargetFrameworks>netstandard1.2;net45</TargetFrameworks>
+    <Version>2.1.0.0</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Vincent Kok, Alex Allen</Authors>
     <Description>This is a wrapper for the Mollie REST webservice. All payment methods and webservice calls are supported.</Description>
@@ -11,8 +11,8 @@
     <PackageProjectUrl>https://github.com/KoanAdventures/MollieApi</PackageProjectUrl>
     <PackageId>MollieApiSdk</PackageId>
     <PackageTags>Mollie</PackageTags>
-    <AssemblyVersion>2.0.6.1</AssemblyVersion>
-    <FileVersion>2.0.6.1</FileVersion>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net45'">

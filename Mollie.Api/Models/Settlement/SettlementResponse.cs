@@ -33,9 +33,10 @@ namespace Mollie.Api.Models.Settlement {
 		public DateTime? SettledAt { get; set; }
 
 		/// <summary>
-		/// The status of the settlement.
+		/// The status of the settlement - See the Mollie.Api.Models.Settlement.SettlementStatus 
+		/// class for a full list of known values.
 		/// </summary>
-		public SettlementStatus Status { get; set; }
+		public string Status { get; set; }
 
 		/// <summary>
 		/// The total amount paid out with this settlement.

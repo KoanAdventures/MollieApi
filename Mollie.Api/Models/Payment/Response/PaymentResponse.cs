@@ -20,7 +20,7 @@ namespace Mollie.Api.Models.Payment.Response {
         /// <summary>
         /// The mode used to create this payment. Mode determines whether a payment is real or a test payment.
         /// </summary>
-        public PaymentMode Mode { get; set; }
+        public Mode Mode { get; set; }
 
         /// <summary>
         /// The payment's date and time of creation, in ISO 8601 format.
@@ -29,10 +29,9 @@ namespace Mollie.Api.Models.Payment.Response {
 
         /// <summary>
         /// The payment's status. Please refer to the page about statuses for more info about which statuses occur at what
-        /// point.
+        /// point. See the Mollie.Api.Models.Payment.PaymentStatus class for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public PaymentStatus? Status { get; set; }
+        public string Status { get; set; }
 
         /// <summary>
         /// Whether or not the payment can be canceled.
@@ -112,12 +111,11 @@ namespace Mollie.Api.Models.Payment.Response {
         public string WebhookUrl { get; set; }
 
         /// <summary>
-        ///     The payment method used for this payment, either forced on creation by specifying the method parameter, or chosen
-        ///     by the consumer our
-        ///     payment method selection screen.
+        /// The payment method used for this payment, either forced on creation by specifying the method parameter, or chosen
+        /// by the consumer our payment method selection screen. See the Mollie.Api.Models.Payment.PaymentMethod class for a 
+        /// full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public PaymentMethod? Method { get; set; }
+        public string Method { get; set; }
 
         /// <summary>
         /// The optional metadata you provided upon payment creation. Metadata can be used to link an order to a payment.
@@ -160,9 +158,9 @@ namespace Mollie.Api.Models.Payment.Response {
         /// <summary>
         /// Indicates which type of payment this is in a recurring sequence. Set to first for first payments that allow the customer to agree 
         /// to automatic recurring charges taking place on their account in the future. Set to recurring for payments where the customer’s card
-        /// is charged automatically.
+        /// is charged automatically. See the Mollie.Api.Models.Payment.SequenceType class for a full list of known values.
         /// </summary>
-        public SequenceType? SequenceType { get; set; }
+        public string SequenceType { get; set; }
 
 
         /// <summary>
@@ -185,7 +183,7 @@ namespace Mollie.Api.Models.Payment.Response {
         /// <summary>
         /// The application fee, if the payment was created with one.
         /// </summary>
-        public PaymentRequestApplicationFee ApplicationFee { get; set; }
+        public ApplicationFee ApplicationFee { get; set; }
 
         /// <summary>
         /// An object with several URL objects relevant to the payment. Every URL object will contain an href and a type field.

@@ -25,9 +25,10 @@ namespace Mollie.Api.Models.Invoice {
 		public string VatNumber { get; set; }
 
 		/// <summary>
-		/// Status of the invoices
+		/// Status of the invoices - See the Mollie.Api.Models.Invoice.InvoiceStatus class for
+		/// a full list of known values
 		/// </summary>
-		public InvoiceStatus Status { get; set; }
+		public string Status { get; set; }
 
 		/// <summary>
 		/// The invoice date (in YYYY-MM-DD format).

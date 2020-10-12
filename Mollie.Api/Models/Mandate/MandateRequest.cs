@@ -1,6 +1,4 @@
 ﻿using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Mollie.Api.Models.Mandate {
     public class MandateRequest {
@@ -9,10 +7,9 @@ namespace Mollie.Api.Models.Mandate {
         }
 
         /// <summary>
-        /// Payment method of the mandate.
+        /// Payment method of the mandate - See the Mollie.Api.Models.Payment.PaymentMethod class for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public Payment.PaymentMethod Method { get; set; }
+        public string Method { get; set; }
 
         /// <summary>
         /// Required - Name of consumer you add to the mandate

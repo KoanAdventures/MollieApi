@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Mollie.Api.JsonConverters;
 using Mollie.Api.Models.Order.Response;
-using Mollie.Api.Models.Payment;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -24,16 +23,16 @@ namespace Mollie.Api.Models.Order {
         public string ProfileId { get; set; }
 
         /// <summary>
-        /// The payment method last used when paying for the order.
+        /// The payment method last used when paying for the order - See the 
+        /// Mollie.Api.Models.Payment.PaymentMethod class for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public Payment.PaymentMethod? Method { get; set; }
+        public string Method { get; set; }
 
         /// <summary>
         /// The mode used to create this order.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public PaymentMode Mode { get; set; }
+        public Mode Mode { get; set; }
 
         /// <summary>
         /// The total amount of the order, including VAT and discounts.
@@ -51,9 +50,9 @@ namespace Mollie.Api.Models.Order {
         public Amount AmountRefunded { get; set; }
 
         /// <summary>
-        /// The status of the order. 
+        /// The status of the order - See the Mollie.Api.Models.Order.OrderStatus class for a full list of known values.
         /// </summary>
-        public OrderStatus Status { get; set; }
+        public string Status { get; set; }
 
         /// <summary>
         /// Whether or not the order can be (partially) canceled.
@@ -86,8 +85,9 @@ namespace Mollie.Api.Models.Order {
         public string Locale { get; set; }
 
         /// <summary>
-        /// The optional metadata you provided upon subscription creation. Metadata can for example be used to link a plan to a
-        /// subscription.
+        /// Provide any data you like, for example a string or a JSON object. We will save the data 
+        /// alongside the order. Whenever you fetch the order with our API, we’ll also include the 
+        /// metadata. You can use up to approximately 1kB.
         /// </summary>
         [JsonConverter(typeof(RawJsonConverter))]
         public string Metadata { get; set; }

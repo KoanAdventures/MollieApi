@@ -31,8 +31,9 @@
 		public SettlementPeriodCostsRate Rate { get; set; }
 
 		/// <summary>
-		/// The payment method ID, if applicable.
+		/// The payment method ID, if applicable - See the Mollie.Api.Models.Payment.PaymentMethod 
+		/// class for a full list of known values.
 		/// </summary>
-		public Payment.PaymentMethod? Method { get; set; }
+		public string Method { get; set; }
 	}
 }

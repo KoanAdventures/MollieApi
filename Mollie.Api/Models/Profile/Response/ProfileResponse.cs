@@ -41,14 +41,16 @@ namespace Mollie.Api.Models.Profile.Response {
         public string Phone { get; set; }
 
         /// <summary>
-        /// The industry associated with the profile's tradename or brand.
+        /// The industry associated with the profile's tradename or brand. See the Mollie.Api.Models.Profile.CategoryCode 
+        /// class for a full list of known values.
         /// </summary>
-        public CategoryCode CategoryCode { get; set; }
+        public int CategoryCode { get; set; }
 
         /// <summary>
-        /// The profile status determines whether the payment profile is able to receive live payments.
+        /// The profile status determines whether the payment profile is able to receive live payments. See the 
+        /// Mollie.Api.Models.Profile.ProfileStatus class for a full list of known values.
         /// </summary>
-        public ProfileStatus Status { get; set; }
+        public string Status { get; set; }
 
         /// <summary>
         /// The presence of a review object indicates changes have been made that have not yet been approved by Mollie.
@@ -71,8 +73,9 @@ namespace Mollie.Api.Models.Profile.Response {
 
     public class Review {
         /// <summary>
-        /// The status of the requested profile changes.
+        /// The status of the requested profile changes. See the Mollie.Api.Models.Profile.ReviewStatus 
+        /// class for a full list of known values.
         /// </summary>
-        public ReviewStatus Status { get; set; }
+        public string Status { get; set; }
     }
 }

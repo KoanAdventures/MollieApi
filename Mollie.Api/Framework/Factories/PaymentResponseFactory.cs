@@ -4,12 +4,10 @@ using Mollie.Api.Models.Payment.Response.Specific;
 
 namespace Mollie.Api.Framework.Factories {
     public class PaymentResponseFactory {
-        public PaymentResponse Create(PaymentMethod? paymentMethod) {
+        public PaymentResponse Create(string paymentMethod) {
             switch (paymentMethod) {
                 case PaymentMethod.BankTransfer:
                     return new BankTransferPaymentResponse();
-                case PaymentMethod.Bitcoin:
-                    return new BitcoinPaymentResponse();
                 case PaymentMethod.CreditCard:
                     return new CreditCardPaymentResponse();
                 case PaymentMethod.Ideal:

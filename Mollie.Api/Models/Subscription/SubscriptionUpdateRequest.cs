@@ -29,6 +29,11 @@ namespace Mollie.Api.Models.Subscription {
         public string Description { get; set; }
 
         /// <summary>
+        /// Interval to wait between charges, for example 1 month or 14 days.
+        /// </summary>
+        public string Interval { get; set; }
+
+        /// <summary>
         /// Optional – Use this parameter to set a webhook URL for all subscription payments.
         /// </summary>
         public string WebhookUrl { get; set; }
@@ -37,6 +42,7 @@ namespace Mollie.Api.Models.Subscription {
         /// Provide any data you like, and we will save the data alongside the subscription. Whenever you fetch the subscription
         /// with our API, we’ll also include the metadata. You can use up to 1kB of JSON.
         /// </summary>
+        [JsonConverter(typeof(RawJsonConverter))]
         public string Metadata { get; set; }
 
         /// <summary>

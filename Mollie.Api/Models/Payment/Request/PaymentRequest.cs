@@ -1,9 +1,13 @@
 ﻿using Mollie.Api.JsonConverters;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Mollie.Api.Models.Payment.Request {
     public class PaymentRequest {
+        public PaymentRequest() {
+        }
+
         /// <summary>
         /// The amount that you want to charge, e.g. {"currency":"EUR", "value":"100.00"} if you would want to charge €100.00.
         /// </summary>
@@ -29,7 +33,6 @@ namespace Mollie.Api.Models.Payment.Request {
         /// </summary>
         public string WebhookUrl { get; set; }
 
-
         /// <summary>
         /// Allows you to preset the language to be used in the payment screens shown to the consumer. Setting a locale is highly 
         /// recommended and will greatly improve your conversion rate. When this parameter is omitted, the browser language will 
@@ -43,24 +46,49 @@ namespace Mollie.Api.Models.Payment.Request {
         /// Normally, a payment method selection screen is shown. However, when using this parameter, your customer will skip the 
         /// selection screen and will be sent directly to the chosen payment method. The parameter enables you to fully integrate 
         /// the payment method selection into your website, however note Mollie’s country based conversion optimization is lost.
+        /// See the Mollie.Api.Models.Payment.PaymentMethod class for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public PaymentMethod? Method { get; set; }
+        [JsonIgnore]
+        public string Method { 
+            get {
+                return this.Methods.FirstOrDefault();
+            }
+            set {
+                if (value == null) {
+                    this.Methods = null;
+                }
+                else {
+                    this.Methods = new List<string>();
+                    this.Methods.Add(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Normally, a payment method screen is shown. However, when using this parameter, you can choose a specific payment method
+        /// and your customer will skip the selection screen and is sent directly to the chosen payment method. The parameter 
+        /// enables you to fully integrate the payment method selection into your website.
+        /// You can also specify the methods in an array.By doing so we will still show the payment method selection screen but will 
+        /// only show the methods specified in the array. For example, you can use this functionality to only show payment methods 
+        /// from a specific country to your customer.
+        /// </summary>
+        [JsonProperty("method")]
+        public IList<string> Methods { get; set; }
 
         /// <summary>
         /// Provide any data you like, for example a string or a JSON object. We will save the data alongside the payment. Whenever 
         /// you fetch the payment with our API, we’ll also include the metadata. You can use up to approximately 1kB.
         /// </summary>
+        [JsonConverter(typeof(RawJsonConverter))]
         public string Metadata { get; set; }
 
         /// <summary>
         /// Indicate which type of payment this is in a recurring sequence. If set to first, a first payment is created for the 
         /// customer, allowing the customer to agree to automatic recurring charges taking place on their account in the future. 
         /// If set to recurring, the customer’s card is charged automatically. Defaults to oneoff, which is a regular non-recurring 
-        /// payment(see also: Recurring).
+        /// payment(see also: Recurring). See the Mollie.Api.Models.Payment.SequenceType class for a full list of known values.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public SequenceType? SequenceType { get; set; }
+        public string SequenceType { get; set; }
 
         /// <summary>
         /// The ID of the Customer for whom the payment is being created. This is used for recurring payments and single click payments.
@@ -87,7 +115,15 @@ namespace Mollie.Api.Models.Payment.Request {
 		///	Oauth only - Optional – Adding an Application Fee allows you to charge the merchant a small sum for the payment and transfer 
 		/// this to your own account.
 		/// </summary>
-		public PaymentRequestApplicationFee ApplicationFee { get; set; }
+		public ApplicationFee ApplicationFee { get; set; }
+
+        /// <summary>
+        /// For digital goods in most jurisdictions, you must apply the VAT rate from your customer’s country. Choose the VAT rates 
+        /// you have used for the order to ensure your customer’s country matches the VAT country. Use this parameter to restrict the 
+        /// payment methods available to your customer to those from a single country. If available, the credit card method will still
+        /// be offered, but only cards from the allowed country are accepted.
+        /// </summary>
+        public string RestrictPaymentMethodsToCountry { get; set; }
 
         public void SetMetadata(object metadataObj, JsonSerializerSettings jsonSerializerSettings = null) {
             this.Metadata = JsonConvert.SerializeObject(metadataObj, jsonSerializerSettings);

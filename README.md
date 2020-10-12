@@ -1,11 +1,13 @@
 # MollieApi
+![](https://github.com/Viincenttt/MollieApi/workflows/Run%20automated%20tests/badge.svg)
 
 _Note: This version uses a lower version of Newtonsoft.JSON, and is therefore compatible with Azure Functions_
 
 
-This project allows you to easily add the [Mollie payment provider](https://www.mollie.com) to your application. Mollie has excellent [documentation](https://www.mollie.com/nl/docs/overzicht) which I highly recommend you read before using this library. Please keep in mind that this is a 3rd party library and I am in no way associated with Mollie. 
+This project allows you to easily add the [Mollie payment provider](https://www.mollie.com) to your application. Mollie has excellent [documentation](https://www.mollie.com/nl/docs/overzicht) which I highly recommend you read before using this library. 
 
-If you have encounter any issues while using this library or have any feature requests, feel free to open an issue on GitHub. 
+## Support
+If you have encounter any issues while using this library or have any feature requests, feel free to open an issue on GitHub. If you need fast support or need help integrating the Mollie API into your .NET application, please contact me on [LinkedIn](https://www.linkedin.com/in/vincent-kok-4aa44211/). 
 
 ## Contributions
 
@@ -20,7 +22,12 @@ Have you spotted a bug or want to add a missing feature? All pull requests are w
 [6. Customer API](#6-customer-api)  
 [7. Mandate API](#7-mandate-api)  
 [8. Subscription API](#8-subscription-api)  
-[9. Order API](#9-order-api)
+[9. Order API](#9-order-api)  
+[10. Organizations API](#10-organizations-api)  
+[11. Connect Api](#11-connect-api)  
+[12. Profile Api](#12-profile-api)  
+[13. Captures API](#13-captures-api)  
+[14. Onboarding Api](#14-onboarding-api)  
 
 ## 1. Mollie API v1 and v2
 In May 2018, Mollie launched version 2 of their API. Version 2 offers support for multicurrency, improved error messages and much more.  The current version of the Mollie API client supports all API version 2 features. If you want to keep using version 1, you can use version 1.5.2 of the Mollie API Nuget package. Version 2.0.0+ of the Mollie API client supports version 2 of the API.  
@@ -51,8 +58,10 @@ This library currently supports the following API's:
 - Invoices API
 - Permissions API
 - Profiles API
-- Organisations API
+- Organizations API
 - Order API
+- Captures API
+- Onboarding API
 
 ### Creating a API client object
 Every API has it's own API client class. For example: PaymentClient, PaymentMethodClient, CustomerClient, MandateClient, SubscriptionClient, IssuerClient and RefundClient classes. All of these API client classes also have their own interface. 
@@ -62,14 +71,49 @@ These client API classes allow you to send and receive requests to the Mollie RE
 IPaymentClient paymentClient = new PaymentClient("{yourApiKey}");
 ```
 
+### List of constant value strings
+In the past, this library used enums that were decorated with the EnumMemberAttribute for static values that were defined in the Mollie documentation. We have now moved away from this idea and are using constant strings everywhere. The reason for this is that enum values often broke when Mollie added new values to their API. This means that I had to release a new version every time when Mollie added a new value and all library consumers had to update their version. The following static classes are available with const string values that you can use to set and compare values in your code:
+- Mollie.Api.Models.Payment.PaymentMethod
+- Mollie.Api.Models.Payment.PaymentStatus
+- Mollie.Api.Models.Payment.SequenceType
+- Mollie.Api.Models.Payment.Request.KbcIssuer
+- Mollie.Api.Models.Payment.Response.CreditCardAudience
+- Mollie.Api.Models.Payment.Response.CreditCardSecurity
+- Mollie.Api.Models.Payment.Response.CreditCardFailureReason
+- Mollie.Api.Models.Payment.Response.CreditCardLabel
+- Mollie.Api.Models.Payment.Response.CreditCardFeeRegion
+- Mollie.Api.Models.Payment.Response.PayPalSellerProtection
+- Mollie.Api.Models.Mandate.InvoiceStatus
+- Mollie.Api.Models.Mandate.MandateStatus
+- Mollie.Api.Models.Order.OrderLineDetailsType
+- Mollie.Api.Models.Order.OrderLineStatus
+- Mollie.Api.Models.Order.OrderStatus
+- Mollie.Api.Models.Profile.CategoryCode
+- Mollie.Api.Models.Profile.ProfileStatus
+- Mollie.Api.Models.Refund.RefundStatus
+- Mollie.Api.Models.Settlement.SettlementStatus
+- Mollie.Api.Models.Subscription.SubscriptionStatus
+- Mollie.Api.Models.Payment.Locale
+- Mollie.Api.Models.Currency
+- Mollie.Api.Models.Connect.AppPermissions
+- Mollie.Api.Models.Onboarding.Response.OnboardingStatus
 
+You can use these classes similar to how you use enums. For example, when creating a new payment, you can do the following:
+```c#
+PaymentRequest paymentRequest = new PaymentRequest() {
+    Amount = new Amount(Currency.EUR, 100.00m),
+    Description = "Test payment of the example project",
+    RedirectUrl = "http://google.com",
+	Method = Mollie.Api.Models.Payment.PaymentMethod.Ideal // instead of "Ideal"
+};
+```
 
 ## 3. Payment API
 ### Creating a payment
 ```c#
 IPaymentClient paymentClient = new PaymentClient("{yourApiKey}");
 PaymentRequest paymentRequest = new PaymentRequest() {
-    Amount = new Amount(Currency.EUR, "100.00"),
+    Amount = new Amount(Currency.EUR, 100.00m),
     Description = "Test payment of the example project",
     RedirectUrl = "http://google.com"
 };
@@ -80,14 +124,15 @@ PaymentResponse paymentResponse = await paymentClient.CreatePaymentAsync(payment
 If you want to create a payment with a specific paymentmethod, there are seperate classes that allow you to set paymentmethod specific parameters. For example, a bank transfer payment allows you to set the billing e-mail and due date. Have a look at the [Mollie create payment documentation](https://www.mollie.com/nl/docs/reference/payments/create) for more information. 
 
 The full list of payment specific request classes is:
+- ApplePayPaymentRequest
 - BankTransferPaymentRequest
-- BitcoinPaymentRequest
 - CreditCardPaymentRequest
 - GiftcardPaymentRequest
 - IdealPaymentRequest
 - KbcPaymentRequest
 - PayPalPaymentRequest
 - PaySafeCardPaymentRequest
+- Przelewy24PaymentRequest
 - SepaDirectDebitRequest
 
 For example, if you'd want to create a bank transfer payment, you can instantiate a new BankTransferPaymentRequest:
@@ -99,10 +144,41 @@ paymentRequest.BillingEmail = "{billingEmail}";
 BankTransferPaymentResponse response = (BankTransferPaymentResponse)await paymentClient.CreatePaymentAsync(paymentRequest);
 ```
 
+#### QR codes
+Some payment methods also support QR codes. In order to retrieve a QR code, you have to set the `includeQrCode` parameter to `true` when sending the payment request. For example:
+```c#
+PaymentRequest paymentRequest = new PaymentRequest() {
+	Amount = new Amount(Currency.EUR, 100.00m),
+	Description = "Description",
+	RedirectUrl = "http://www.mollie.com",
+	Method = PaymentMethod.Ideal
+};
+IPaymentClient paymentClient = new PaymentClient("{yourApiKey}");
+PaymentResponse result = await this._paymentClient.CreatePaymentAsync(paymentRequest, includeQrCode: true);
+IdealPaymentResponse idealPaymentResult = result as IdealPaymentResponse;
+IdealPaymentResponseDetails idealPaymentDetails = idealPaymentResult.Details;
+string qrCode = idealPaymentDetails.QrCode.Src;
+```
+
+#### Passing multiple payment methods
+It is also possible to pass multiple payment methods when creating a new payment. Mollie will then only show the payment methods you've specified when creating the payment request. 
+```c#
+PaymentRequest paymentRequest = new PaymentRequest() {
+	Amount = new Amount(Currency.EUR, 100.00m),
+	Description = "Description",
+	RedirectUrl = "http://www.mollie.com",
+	Methods = new List<string>() {
+		PaymentMethod.Ideal,
+		PaymentMethod.CreditCard,
+		PaymentMethod.DirectDebit
+	}
+};
+```
+
 ### Retrieving a payment by id
 ```c#
 IPaymentClient paymentClient = new PaymentClient("{yourApiKey}");
-PaymentResponse result = await paymentClient.GetPaymentAsync(paymentResponse.Id);
+PaymentResponse result = await paymentClient.GetPaymentAsync({paymentId});
 ```
 
 Keep in mind that some payment methods have specific payment detail values. For example: PayPal payments have reference and customer reference properties. In order to access these properties you have to cast the PaymentResponse to the PayPalPaymentResponse and access the Detail property. 
@@ -113,7 +189,6 @@ The full list of payment specific response classes is:
 - BancontactPaymentResponse
 - BankTransferPaymentResponse
 - BelfiusPaymentResponse
-- BitcoinPaymentResponse
 - CreditCardPaymentResponse
 - GiftcardPaymentResponse
 - IdealPaymentResponse
@@ -123,6 +198,17 @@ The full list of payment specific response classes is:
 - PaySafeCardPaymentResponse
 - SepaDirectDebitResponse
 - SofortPaymentResponse
+
+### Updating a payment
+Some properties of a payment can be updated after the payment has been created. 
+```c#
+IPaymentClient paymentClient = new PaymentClient("{yourApiKey}");
+PaymentUpdateRequest paymentUpdateRequest = new PaymentUpdateRequest() {
+	Description = "Updated description",
+	Metadata = "My metadata"
+};
+PaymentResponse updatedPayment = await this._paymentClient.UpdatePaymentAsync({paymentId}, paymentUpdateRequest);
+```
 
 ### Setting metadata
 Mollie allows you to send any metadata you like in JSON notation and will save the data alongside the payment. When you fetch the payment with the API, Mollie will include the metadata. The library allows you to set the metadata JSON string manually, by setting the Metadata property of the PaymentRequest class, but the recommended way of setting/getting the metadata is to use the SetMetadata/Getmetadata methods. 
@@ -137,7 +223,7 @@ CustomMetadataClass metadataRequest = new CustomMetadataClass() {
 
 // Create a new payment
 PaymentRequest paymentRequest = new PaymentRequest() {
-    Amount = new Amount(Currency.EUR, "100.00"),
+    Amount = new Amount(Currency.EUR, 100.00m),
     Description = "{description}",
     RedirectUrl = this.DefaultRedirectUrl,
 };
@@ -252,6 +338,17 @@ ICustomerClient customerClient = new CustomerClient("{yourApiKey}");
 await customerClient.DeleteCustomerAsync("{customerIdToDelete}");
 ```
 
+### Create customer payment
+Creates a payment for the customer.
+```c#
+PaymentRequest paymentRequest = new PaymentRequest() {
+    Amount = new Amount(Currency.EUR, 100.00m),
+    Description = "{description}",
+    RedirectUrl = this.DefaultRedirectUrl,
+};
+ICustomerClient customerClient = new CustomerClient("{yourApiKey}");
+PaymentResponse result = await customerClient.CreateCustomerPayment({customerId}, paymentRequest);
+```
 
 
 ## 7. Mandate API
@@ -292,14 +389,14 @@ await mandateclient.RevokeMandate("{customerId}", "{mandateId}");
 
 
 ## 8. Subscription API
-With subscriptions, you can schedule recurring payments to take place at regular intervals. For example, by simply specifying an amount and an interval, you can create an endless subscription to charge a monthly fee, until the consumer cancels their subscription. Or, you could use the times parameter to only charge a limited number of times, for example to split a big transaction in multiple parts.
+With subscriptions, you can schedule recurring payments to take place at regular intervals. For example, by simply specifying an amount and an interval, you can create an endless subscription to charge a monthly fee, until the consumer cancels their subscription. Or, you could use the times parameter to only charge a limited number of times, for example to split a big transaction in multiple parts. You must create a mandate with the customers ID before a subscription can be made.
 
 ### Creating a new subscription
 Create a subscription for a specific customer.
 ```c#
 ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
 SubscriptionRequest subscriptionRequest = new SubscriptionRequest() {
-	Amount = new Amount(Currency.EUR, "100.00"),
+	Amount = new Amount(Currency.EUR, 100.00m),
 	Times = 5,
     	Interval = "1 month",
 	Description = "{uniqueIdentifierForSubscription}"
@@ -314,20 +411,36 @@ ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
 SubscriptionResponse subscriptionResponse = await subscriptionClient.GetSubscriptionAsync("{customerId}", "{subscriptionId}");
 ```
 
-### Retrieve subscription list
+### Cancelling a subscription
+A subscription can be canceled any time by calling DELETE on the resource endpoint.
+```c#
+ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
+await subscriptionClient.CancelSubscriptionAsync("{customerId}", "{subscriptionId}");
+```
+
+### Retrieve customer subscription list
 Retrieve all subscriptions of a customer.
 ```c#
 ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
 ListResponse<SubscriptionResponse> response = await subscriptionClient.GetSubscriptionListAsync("{customerId}", null, {numberOfSubscriptions});
 ```
 
-### Cancelling a subscription
+### Retrieve all subscription list
+Retrieve all subscriptions
 ```c#
 ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
-await subscriptionClient.CancelSubscriptionAsync("{customerId}", "{subscriptionId}");
+ListResponse<SubscriptionResponse> response = await subscriptionClient.GetAllSubscriptionList();
+```
+
+### List subscription payments
+Retrieve all payments of a specific subscriptions of a customer.
+```c#
+ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
+ListResponse<PaymentResponse> response = await subscriptionClient.GetSubscriptionPaymentListAsync({customerId}, {subscriptionId});
 ```
 
 ### Updating a subscription
+Some fields of a subscription can be updated by calling PATCH on the resource endpoint. Each field is optional. You cannot update a canceled subscription.
 ```c#
 ISubscriptionClient subscriptionClient = new SubscriptionClient("{yourApiKey}");
 SubscriptionUpdateRequest updatedSubscriptionRequest = new SubscriptionUpdateRequest() {
@@ -345,14 +458,14 @@ The Orders API allows you to use Mollie for your order management. Pay after del
 ```c#
 IOrderClient orderClient = new OrderClient("{yourApiKey}");
 OrderRequest orderRequest = new OrderRequest() {
-	Amount = new Amount(Currency.EUR, "100.00"),
+	Amount = new Amount(Currency.EUR, 100.00m),
 	OrderNumber = "16738",
 	Lines = new List<OrderLineRequest>() {
 		new OrderLineRequest() {
 			Name = "A box of chocolates",
 			Quantity = 1,
-			UnitPrice = new Amount(Currency.EUR, "100.00"),
-			TotalAmount = new Amount(Currency.EUR, "100.00"),
+			UnitPrice = new Amount(Currency.EUR, 100.00m),
+			TotalAmount = new Amount(Currency.EUR, 100.00m),
 			VatRate = "21.00",
 			VatAmount = new Amount(Currency.EUR, "17.36")
 		}
@@ -393,7 +506,7 @@ For example, if you'd want to create a order with bank transfer payment:
 ```c#
 IOrderClient orderClient = new OrderClient("{yourApiKey}");
 OrderRequest orderRequest = new OrderRequest() {
-	Amount = new Amount(Currency.EUR, "100.00"),
+	Amount = new Amount(Currency.EUR, 100.00m),
 	OrderNumber = "16738",
 	Method = PaymentMethod.BankTransfer,
 	Payment = new BankTransferSpecificParameters {
@@ -403,8 +516,8 @@ OrderRequest orderRequest = new OrderRequest() {
 		new OrderLineRequest() {
 			Name = "A box of chocolates",
 			Quantity = 1,
-			UnitPrice = new Amount(Currency.EUR, "100.00"),
-			TotalAmount = new Amount(Currency.EUR, "100.00"),
+			UnitPrice = new Amount(Currency.EUR, 100.00m),
+			TotalAmount = new Amount(Currency.EUR, 100.00m),
 			VatRate = "21.00",
 			VatAmount = new Amount(Currency.EUR, "17.36")
 		}
@@ -424,14 +537,29 @@ OrderRequest orderRequest = new OrderRequest() {
 };
 ```
 
+#### Passing multiple payment methods
+It is also possible to pass multiple payment methods when creating a new order. Mollie will then only show the payment methods you've specified when creating the payment request. 
+```c#
+OrderRequest orderRequest = new OrderRequest() {
+	Amount = new Amount(Currency.EUR, 100.00m),
+	OrderNumber = "16738",
+	Methods = new List<string>() {
+		PaymentMethod.Ideal,
+		PaymentMethod.CreditCard,
+		PaymentMethod.DirectDebit
+	}
+	...
+```
 
 ### Retrieve a order by id
+Retrieve a single order by its ID.
 ```c#
 IOrderClient orderClient = new OrderClient("{yourApiKey}");
 OrderResponse retrievedOrder = await orderClient.GetOrderAsync({orderId});
 ```
 
 ### Update existing order
+This endpoint can be used to update the billing and/or shipping address of an order.
 ```c#
 IOrderClient orderClient = new OrderClient("{yourApiKey}");
 OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest() {
@@ -440,13 +568,8 @@ OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest() {
 OrderResponse updatedOrder = await orderClient.UpdateOrderAsync({orderId}, orderUpdateRequest);
 ```
 
-### Cancel existing order
-```c#
-IOrderClient orderClient = new OrderClient("{yourApiKey}");
- OrderResponse canceledOrder = await this._orderClient.GetOrderAsync({orderId});
-```
-
 ### Update order line
+This endpoint can be used to update an order line. Only the lines that belong to an order with status created, pending or authorized can be updated.
 ```c#
 IOrderClient orderClient = new OrderClient("{yourApiKey}");
 OrderLineUpdateRequest updateRequest = new OrderLineUpdateRequest() {
@@ -456,7 +579,202 @@ OrderResponse updatedOrder = await orderClient.UpdateOrderLinesAsync({orderId}, 
 ```
 
 ### Retrieve list of orders
+Retrieve all orders.
 ```c#
 IOrderClient orderClient = new OrderClient("{yourApiKey}");
 ListResponse<OrderResponse> response = await orderClient.GetOrderListAsync();
+```
+
+### Cancel existing order
+Cancels an existing order. Take a look at the documentation on this endpoint to see which conditions need to apply before an order can be canceled.
+```c#
+IOrderClient orderClient = new OrderClient("{yourApiKey}");
+ OrderResponse canceledOrder = await orderClient.GetOrderAsync({orderId});
+```
+
+### Cancel order lines
+This endpoint can be used to cancel one or more order lines that were previously authorized using a pay after delivery payment method. Use the Cancel Order API if you want to cancel the entire order or the remainder of the order.
+```c#
+OrderLineCancellationRequest cancellationRequest = new OrderLineCancellationRequest() {
+	Lines = new List<OrderLineDetails>() {
+		Id = {orderLineId},
+		Quantity = 5,
+		Amount = new Amount("EUR", 5)
+	}
+};
+IOrderClient orderClient = new OrderClient("{yourApiKey}");
+OrderResponse result = await orderClient.CancelOrderLinesAsync({orderId}, cancellationRequest);
+```
+
+### Create order payment
+An order has an automatically created payment that your customer can use to pay for the order. When the payment expires you can create a new payment for the order using this endpoint.
+```c#
+OrderPaymentRequest orderPaymentRequest = new OrderPaymentRequest() {
+	Method = PaymentMethod.Ideal,
+	CustomerId = {customerId},
+	MandateId = {mandateId}
+};
+IOrderClient orderClient = new OrderClient("{yourApiKey}");
+OrderResponse result = await orderClient.CreateOrderPaymentAsync({orderId}, orderPaymentRequest);
+```
+
+### Create order refund
+When using the Orders API, refunds should be made against the Order. When using pay after delivery payment methods such as Klarna Pay later and Klarna Slice it, this ensures that your customer will receive credit invoices with the correct product information on them and generally have a great experience.
+```c#
+OrderRefundRequest orderRefundRequest = new OrderRefundRequest() {
+	Lines = new List<OrderLineDetails>() {
+		Id = {orderLineId},
+		Quantity = 5,
+		Amount = new Amount("EUR", 5)
+	},
+	Description = ""
+};
+IOrderClient orderClient = new OrderClient("{yourApiKey}");
+OrderResponse result = await orderClient.CreateOrderRefundAsync({orderId}, orderRefundRequest);
+```
+
+### List order refunds
+Retrieve all order refunds.
+```C#
+IOrderClient orderClient = new OrderClient("{yourApiKey}");
+ListResponse<RefundResponse> result = await orderClient.GetOrderRefundListAsync({orderId});
+```
+
+## 10. Organizations API
+### Get current organization
+Retrieve the currently authenticated organization.
+```C#
+IOrganizationsClient client = new OrganizationsClient("{yourApiKey}");
+OrganizationResponse result = await client.GetCurrentOrganizationAsync();
+```
+
+### Get organization
+```C#
+IOrganizationsClient client = new OrganizationsClient("{yourApiKey}");
+OrganizationResponse result = await client.GetOrganizationAsync({organizationId});
+```
+
+## 11. Connect Api
+### Creating a authorization URL
+The Authorize endpoint is the endpoint on Mollie web site where the merchant logs in, and grants authorization to your client application. E.g. when the merchant clicks on the Connect with Mollie button, you should redirect the merchant to the Authorize endpoint.
+```C#
+IConnectClient client = new ConnectClient({clientId}, {clientSecret});
+List<string> scopes = new List<string>() { AppPermissions.PaymentsRead };
+string authorizationUrl = client.GetAuthorizationUrl({state}, scopes);
+```
+
+### Generate token
+Exchange the auth code received at the Authorize endpoint for an actual access token, with which you can communicate with the Mollie API.
+```C#
+IConnectClient client = new ConnectClient({clientId}, {clientSecret});
+TokenRequest request = new TokenRequest({authCode}, {redirectUrl});
+TokenResponse result = client.GetAccessTokenAsync(request);
+```
+
+### Revoke token
+Revoke an access- or a refresh token. Once revoked the token can not be used anymore.
+```C#
+IConnectClient client = new ConnectClient({clientId}, {clientSecret});
+RevokeTokenRequest revokeTokenRequest = new RevokeTokenRequest() {
+	TokenTypeHint = TokenType.AccessToken,
+	Token = {accessToken}
+};
+TokenResponse result = client.RevokeTokenAsync(revokeTokenRequest);
+```
+
+## 12. Profile Api
+### Create profile
+In order to process payments, you need to create a website profile. A website profile can easily be created via the Dashboard manually. However, the Mollie API also allows automatic profile creation via the Profiles API.
+```C#
+ProfileRequest profileRequest = new ProfileRequest() {
+	Name = {name},
+	Website = {website},
+	...
+};
+IProfileClient client = new ProfileClient({yourApiKey});
+ProfileResponse response = client.CreateProfileAsync(profileRequest);
+```
+
+### Get profile
+Retrieve details of a profile, using the profile’s identifier.
+```C#
+IProfileClient client = new ProfileClient({yourApiKey});
+ProfileResponse profileResponse = await client.GetProfileAsync({profileId});
+```
+
+### Get current profile
+Use this API if you are creating a plugin or SaaS application that allows users to enter a Mollie API key, and you want to give a confirmation of the website profile that will be used in your plugin or application.
+```C#
+IProfileClient client = new ProfileClient({yourApiKey});
+ProfileResponse profileResponse = await client.GetCurrentProfileAsync();
+```
+
+### Update profile
+A profile is required to process payments. A profile can easily be created and updated via the Dashboard manually. However, the Mollie API also allows automatic profile creation and updates via the Profiles API.
+```C#
+ProfileRequest profileRequest = new ProfileRequest() {
+	Name = {name},
+	Website = {website},
+	...
+};
+IProfileClient client = new ProfileClient({yourApiKey});
+ProfileResponse profileResponse = await client.UpdateProfileAsync({profileId}, profileRequest);
+```
+
+### Enable or disable payment method
+Enable or disable a payment method on a specific or authenticated profile to use it with payments.
+```C#
+IProfileClient client = new ProfileClient({yourApiKey});
+PaymentMethodResponse paymentMethodResponse = await profileClient.EnablePaymentMethodAsync({profileId}, PaymentMethod.Ideal);
+await profileClient.DisablePaymentMethodAsync({profileId}, PaymentMethod.Ideal);
+```
+
+### Enable or disable gift card issuer
+Enable or disable a gift card issuer on a specific or authenticated profile to use it with payments.
+```C#
+IProfileClient client = new ProfileClient({yourApiKey});
+const string issuerToToggle = "festivalcadeau";
+EnableGiftCardIssuerResponse paymentMethodResponse = await profileClient.EnableGiftCardIssuerAsync({profileId}, issuerToToggle);
+await profileClient.DisableGiftCardIssuerAsync({profileId}, issuerToToggle);
+```
+
+## 13. Captures API
+### Get capture
+Retrieve a single capture by its ID. Note the original payment’s ID is needed as well.
+```C#
+CaptureClient captureClient = new CaptureClient({yourApiKey});
+CaptureResponse result = await captureClient.GetCaptureAsync({paymentId}, {captureId});
+```
+
+### List captures
+Retrieve all captures for a certain payment.
+```C#
+CaptureClient captureClient = new CaptureClient({yourApiKey});
+ListResponse<CaptureResponse> result = await captureClient.GetCapturesListAsync({paymentId});
+```
+
+## 14. Onboarding Api
+### Get onboarding status
+Get the status of onboarding of the authenticated organization.
+```C#
+OnboardingClient onboardingClient = new OnboardingClient({yourApiKey});
+OnboardingStatusResponse onboardingResponse = await onboardingClient.GetOnboardingStatusAsync();
+```
+
+### Submit onboarding data
+Submit data that will be prefilled in the merchant’s onboarding. Please note that the data you submit will only be processed when the onboarding status is needs-data.
+```C#
+SubmitOnboardingDataRequest submitOnboardingDataRequest = new SubmitOnboardingDataRequest() {
+	Organization = new OnboardingOrganizationRequest() {
+		Name = {name},
+		Address = new AddressObject() {
+			StreetAndNumber = {streetAndNumber}
+		}
+	},
+	Profile = new OnboardingProfileRequest() {
+		Name = {name}
+	}
+};
+OnboardingClient onboardingClient = new OnboardingClient({yourApiKey});
+await onboardingClient.SubmitOnboardingDataAsync(submitOnboardingDataRequest);
 ```

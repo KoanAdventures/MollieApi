@@ -12,7 +12,7 @@ using Mollie.Api.Models.Url;
 namespace Mollie.Api.Client {
     public abstract class BaseMollieClient {
         public const string ApiEndPoint = "https://api.mollie.com/v2/";
-
+        private readonly string _apiEndpoint = ApiEndPoint;
         private readonly string _apiKey;
         private readonly HttpClient _httpClient;
         private readonly JsonConverterService _jsonConverterService;
@@ -25,6 +25,12 @@ namespace Mollie.Api.Client {
             this._jsonConverterService = new JsonConverterService();
             this._httpClient = httpClient ?? new HttpClient();
             this._apiKey = apiKey;
+        }
+
+        protected BaseMollieClient(HttpClient httpClient = null, string apiEndpoint = ApiEndPoint) {
+            this._apiEndpoint = apiEndpoint;
+            this._jsonConverterService = new JsonConverterService();
+            this._httpClient = httpClient ?? new HttpClient();
         }
 
         private async Task<T> SendHttpRequest<T>(HttpMethod httpMethod, string relativeUri, object data = null) {
@@ -45,24 +51,24 @@ namespace Mollie.Api.Client {
         }
 
         protected async Task<T> GetAsync<T>(string relativeUri) {
-            return await this.SendHttpRequest<T>(HttpMethod.Get, relativeUri);
+            return await this.SendHttpRequest<T>(HttpMethod.Get, relativeUri).ConfigureAwait(false);
         }
 
         protected async Task<T> GetAsync<T>(UrlObjectLink<T> urlObject) {
             this.ValidateUrlLink(urlObject);
-            return await this.GetAsync<T>(urlObject.Href);
+            return await this.GetAsync<T>(urlObject.Href).ConfigureAwait(false); ;
         }
 
         protected async Task<T> PostAsync<T>(string relativeUri, object data) {
-            return await this.SendHttpRequest<T>(HttpMethod.Post, relativeUri, data);
+            return await this.SendHttpRequest<T>(HttpMethod.Post, relativeUri, data).ConfigureAwait(false); ;
         }
 
         protected async Task<T> PatchAsync<T>(string relativeUri, object data) {
-            return await this.SendHttpRequest<T>(new HttpMethod("PATCH"), relativeUri, data);
+            return await this.SendHttpRequest<T>(new HttpMethod("PATCH"), relativeUri, data).ConfigureAwait(false); ;
         }
 
         protected async Task DeleteAsync(string relativeUri, object data = null) {
-            await this.SendHttpRequest<object>(HttpMethod.Delete, relativeUri, data);
+            await this.SendHttpRequest<object>(HttpMethod.Delete, relativeUri, data).ConfigureAwait(false); ;
         }
 
         private async Task<T> ProcessHttpResponseMessage<T>(HttpResponseMessage response) {
@@ -106,13 +112,13 @@ namespace Mollie.Api.Client {
             }
 
             // Don't execute any requests that don't point to the Mollie API URL for security reasons
-            if (!urlObject.Href.Contains(ApiEndPoint)) {
+            if (!urlObject.Href.Contains(this._apiEndpoint)) {
                 throw new ArgumentException($"Url does not point to the Mollie API: {urlObject.Href}");
             }
         }
 
-        private HttpRequestMessage CreateHttpRequest(HttpMethod method, string relativeUri, HttpContent content = null) {
-            HttpRequestMessage httpRequest = new HttpRequestMessage(method, new Uri(new Uri(ApiEndPoint), relativeUri));
+        protected virtual HttpRequestMessage CreateHttpRequest(HttpMethod method, string relativeUri, HttpContent content = null) {
+            HttpRequestMessage httpRequest = new HttpRequestMessage(method, new Uri(new Uri(this._apiEndpoint), relativeUri));
             httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this._apiKey);
             httpRequest.Content = content;

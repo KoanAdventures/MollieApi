@@ -1,8 +1,4 @@
-﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-
-namespace Mollie.Api.Models.Payment.Response {
+﻿namespace Mollie.Api.Models.Payment.Response {
     public class CreditCardPaymentResponse : PaymentResponse {
         /// <summary>
         /// An object with credit card details.
@@ -28,16 +24,16 @@ namespace Mollie.Api.Models.Payment.Response {
         public string CardFingerprint { get; set; }
 
         /// <summary>
-        /// Not always available. – The card's target audience.
+        /// Not always available. – The card's target audience. See the Mollie.Api.Models.Payment.Response.CreditCardAudience 
+        /// class for a full list of known values
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public CreditCardAudience? CardAudience { get; set; }
+        public string CardAudience { get; set; }
 
         /// <summary>
-        /// The card's label. Note that not all labels can be acquired through Mollie.
+        /// The card's label. Note that not all labels can be acquired through Mollie. See the
+        /// Mollie.Api.Models.Payment.Response.CreditCardLabel class for a full list of known values
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public CreditCardLabel? CardLabel { get; set; }
+        public string CardLabel { get; set; }
 
         /// <summary>
         /// The ISO 3166-1 alpha-2 country code of the country the card was issued in. For example: BE.
@@ -45,86 +41,94 @@ namespace Mollie.Api.Models.Payment.Response {
         public string CardCountryCode { get; set; }
 
         /// <summary>
-        /// Only available if the payment succeeded. – The payment's security type.
+        /// Only available if the payment succeeded. – The payment's security type. See the 
+        /// Mollie.Api.Models.Payment.Response.CreditCardSecurity class for a full list of known values
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public CreditCardSecurity? CardSecurity { get; set; }
+        public string CardSecurity { get; set; }
 
         /// <summary>
         /// Only available if the payment succeeded. – The fee region for the payment. See your credit card addendum for
-        /// details. intra-eu for consumer cards from the EU, and other for all other cards.
+        /// details. intra-eu for consumer cards from the EU, and other for all other cards. See the 
+        /// Mollie.Api.Models.Payment.Response.CreditCardFeeRegion class for a full list of known values
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public CreditCardFeeRegion? FeeRegion { get; set; }
+        public string FeeRegion { get; set; }
 
         /// <summary>
-        /// Only available for failed payments. Contains a failure reason code.
+        /// Only available for failed payments. Contains a failure reason code. See the 
+        /// Mollie.Api.Models.Payment.Response.CreditCardFailureReason class for a full list of known values
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        public CreditCardFailureReason? FailureReason { get; set; }
+        public string FailureReason { get; set; }
+
+        /// <summary>
+        /// A localized message that can be shown to your customer, depending on the failureReason
+        /// </summary>
+        public string FailureMessage { get; set; }
+
+        /// <summary>
+        /// The wallet used when creating the payment.
+        /// </summary>
+        public string Wallet { get; set; }
     }
 
     /// <summary>
     /// The card's target audience.
     /// </summary>
-    public enum CreditCardAudience {
-        Consumer,
-        Business
+    public static class CreditCardAudience {
+        public const string Consumer = "consumer";
+        public const string Business = "business";
     }
 
     /// <summary>
     /// Only available if the payment has been completed – The type of security used during payment processing.
     /// </summary>
-    public enum CreditCardSecurity {
-        Normal,
-        [EnumMember(Value = "3dsecure")]
-        Secure3D
+    public static class CreditCardSecurity {
+        public const string Normal = "normal";
+        public const string Secure3D = "3dsecure";
     }
 
     /// <summary>
     /// Only available if the payment has been completed – The fee region for the payment: intra-eu for consumer cards from the EU, and 
     /// other for all other cards.
     /// </summary>
-    public enum CreditCardFeeRegion {
-        [EnumMember(Value = "intra-eu")] IntraEu,
-        [EnumMember(Value = "other")] Other,
-        [EnumMember(Value = "american-express")] AmericanExpress,
-        [EnumMember(Value = "carte-bancaire")] CarteBancaire,
-        [EnumMember(Value = "maestro")] Maestro,
+    public static class CreditCardFeeRegion {
+        public const string IntraEu = "intra-eu";
+        public const string AmericanExpress = "american-express";
+        public const string CarteBancaire = "carte-bancaire";
+        public const string Maestro = "maestro";
     }
 
     /// <summary>
     /// Only available for failed payments. Contains a failure reason code.
     /// </summary>
-    public enum CreditCardFailureReason {
-        [EnumMember(Value = "invalid_card_number")] InvalidCardNumber,
-        [EnumMember(Value = "invalid_cvv")] InvalidCvv,
-        [EnumMember(Value = "invalid_card_holder_name")] InvalidCardHolderName,
-        [EnumMember(Value = "card_expired")] CardExpired,
-        [EnumMember(Value = "invalid_card_type")] InvalidCardType,
-        [EnumMember(Value = "refused_by_issuer")] RefusedByIssuer,
-        [EnumMember(Value = "insufficient_funds")] InsufficientFunds,
-        [EnumMember(Value = "inactive_card")] InactiveCard,
-        [EnumMember(Value = "unknown_reason")] UnknownReason,
-        [EnumMember(Value = "possible_fraud")] PossibleFraud,
-        [EnumMember(Value = "authentication_failed")] AuthenticationFailed
-	}
+    public static class CreditCardFailureReason {
+        public const string InvalidCardNumber = "invalid_card_number";
+        public const string InvalidCvv = "invalid_cvv";
+        public const string InvalidCardHolderName = "invalid_card_holder_name";
+        public const string CardExpired = "CardExpired";
+        public const string InvalidCardType = "invalid_card_type";
+        public const string RefusedByIssuer = "refused_by_issuer";
+        public const string InsufficientFunds = "insufficient_funds";
+        public const string InactiveCard = "inactive_card";
+        public const string UnknownReason = "unknown_reason";
+        public const string PossibleFraud = "possible_fraud";
+        public const string AuthenticationFailed = "authentication_failed";
+    }
 
     /// <summary>
     /// The card's label. Note that not all labels can be acquired through Mollie.
-    /// </summary>
-    public enum CreditCardLabel {
-        [EnumMember(Value = "American Express")] AmericanExpress,
-        [EnumMember(Value = "Carta si")] CartaSi,
-        [EnumMember(Value = "Carte Bleue")] CarteBleue,
-        Dankort,
-        [EnumMember(Value = "Diners Club")] DinersClub,
-        Discover,
-        [EnumMember(Value = "JCB")] Jcb,
-        [EnumMember(Value = "Laser")] Laser,
-        Maestro,
-        Mastercard,
-        Unionpay,
-        Visa
+    /// </summary>    
+    public static class CreditCardLabel {
+        public const string AmericanExpress = "American Express";
+        public const string CartaSi = "Carta si";
+        public const string CarteBleue = "Carte Bleue";
+        public const string Dankort = nameof(Dankort);
+        public const string DinersClub = "Diners Club";
+        public const string Discover = nameof(Discover);
+        public const string Jcb = "JCB";
+        public const string Laser = nameof(Laser);
+        public const string Maestro = nameof(Maestro);
+        public const string Mastercard = nameof(Mastercard);
+        public const string Unionpay = nameof(Unionpay);
+        public const string Visa = nameof(Visa);
     }
 }

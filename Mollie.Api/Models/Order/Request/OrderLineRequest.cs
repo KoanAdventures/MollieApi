@@ -1,10 +1,13 @@
-﻿namespace Mollie.Api.Models.Order {
+﻿using Mollie.Api.JsonConverters;
+using Newtonsoft.Json;
+
+namespace Mollie.Api.Models.Order {
     public class OrderLineRequest {
         /// <summary>
-        /// The type of product bought, for example, a physical or a digital product. Must be one of the following values:
-        /// physical (default), discount, digital, shipping_fee, store_credit, gift_card, surcharge
+        /// The type of product bought, for example, a physical or a digital product. See the 
+        /// Mollie.Api.Models.Order.OrderLineDetailsType class for a full list of known values.
         /// </summary>
-        public OrderLineDetailsType? Type { get; set; }
+        public string Type { get; set; }
 
         /// <summary>
         /// A description of the order line, for example LEGO 4440 Forest Police Station.
@@ -60,5 +63,11 @@
         /// A link pointing to the product page in your web shop of the product sold.
         /// </summary>
         public string ProductUrl { get; set; }
+
+        /// <summary>
+        /// The optional metadata you provided upon line creation.
+        /// </summary>
+        [JsonConverter(typeof(RawJsonConverter))]
+        public string Metadata { get; set; }
     }
 }

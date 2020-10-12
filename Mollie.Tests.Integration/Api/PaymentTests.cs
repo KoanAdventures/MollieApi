@@ -12,6 +12,7 @@ using Mollie.Tests.Integration.Framework;
 using NUnit.Framework;
 
 namespace Mollie.Tests.Integration.Api {
+    using System.Collections.Generic;
     using System.Linq;
     using Mollie.Api.Models.Customer;
     using Mollie.Api.Models.Mandate;
@@ -19,6 +20,7 @@ namespace Mollie.Tests.Integration.Api {
     [TestFixture]
     public class PaymentTests : BaseMollieApiTestClass {
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanRetrievePaymentList() {
             // When: Retrieve payment list with default settings
             ListResponse<PaymentResponse> response = await this._paymentClient.GetPaymentListAsync();
@@ -29,8 +31,9 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task ListPaymentsNeverReturnsMorePaymentsThenTheNumberOfRequestedPayments() {
-            // When: Number of payments requested is 5
+            // Given: Number of payments requested is 5
             int numberOfPayments = 5;
 
             // When: Retrieve 5 payments
@@ -41,9 +44,10 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task WhenRetrievingAListOfPaymentsPaymentSubclassesShouldBeInitialized() {
             // Given: We create a new payment 
-            IdealPaymentRequest paymentRequest = new IdealPaymentRequest() {
+            CreditCardPaymentRequest paymentRequest = new CreditCardPaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
                 Description = "Description",
                 RedirectUrl = this.DefaultRedirectUrl
@@ -54,12 +58,13 @@ namespace Mollie.Tests.Integration.Api {
             ListResponse<PaymentResponse> result = await this._paymentClient.GetPaymentListAsync(null, 5);
 
             // Then: We expect a list with a single ideal payment            
-            Assert.IsAssignableFrom<IdealPaymentResponse>(result.Items.First());
+            Assert.IsAssignableFrom<CreditCardPaymentResponse>(result.Items.First());
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreateDefaultPaymentWithOnlyRequiredFields() {
-            // When: we create a payment request with only the required parameters
+            // Given: we create a payment request with only the required parameters
             PaymentRequest paymentRequest = new PaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
                 Description = "Description",
@@ -76,10 +81,11 @@ namespace Mollie.Tests.Integration.Api {
             Assert.AreEqual(paymentRequest.Description, result.Description);
             Assert.AreEqual(paymentRequest.RedirectUrl, result.RedirectUrl);
         }
-        
+
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreateDefaultPaymentWithAllFields() {
-            // If: we create a payment request where all parameters have a value
+            // Given: we create a payment request where all parameters have a value
             PaymentRequest paymentRequest = new PaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
                 Description = "Description",
@@ -100,32 +106,101 @@ namespace Mollie.Tests.Integration.Api {
             Assert.AreEqual(paymentRequest.Description, result.Description);
             Assert.AreEqual(paymentRequest.RedirectUrl, result.RedirectUrl);
             Assert.AreEqual(paymentRequest.Locale, result.Locale);
-            Assert.AreEqual(paymentRequest.Metadata, result.Metadata);
-            Assert.AreEqual(paymentRequest.WebhookUrl, result.WebhookUrl);
+            Assert.AreEqual(paymentRequest.WebhookUrl, result.WebhookUrl);            
+            Assert.IsTrue(this.IsJsonResultEqual(paymentRequest.Metadata, result.Metadata));
         }
 
-        [TestCase(typeof(IdealPaymentRequest), PaymentMethod.Ideal, typeof(IdealPaymentResponse))]
-        [TestCase(typeof(CreditCardPaymentRequest), PaymentMethod.CreditCard, typeof(CreditCardPaymentResponse))]
+        [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
+        public async Task CanUpdatePayment() {
+            // Given: We create a payment with only the required parameters
+            PaymentRequest paymentRequest = new PaymentRequest() {
+                Amount = new Amount(Currency.EUR, "100.00"),
+                Description = "Description",
+                RedirectUrl = this.DefaultRedirectUrl
+            };
+            PaymentResponse result = await this._paymentClient.CreatePaymentAsync(paymentRequest);
+
+            // When: We update this payment
+            PaymentUpdateRequest paymentUpdateRequest = new PaymentUpdateRequest() {
+                Description = "Updated description",
+                Metadata = "My metadata"
+            };
+            PaymentResponse updatedPayment = await this._paymentClient.UpdatePaymentAsync(result.Id, paymentUpdateRequest);
+
+            // Then: Make sure the payment is updated
+            Assert.AreEqual(paymentUpdateRequest.Description, updatedPayment.Description);
+            Assert.AreEqual(paymentUpdateRequest.Metadata, updatedPayment.Metadata);
+        }
+
+        [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
+        public async Task CanCreatePaymentWithSinglePaymentMethod() {
+            // Given: we create a payment request and specify multiple payment methods
+            PaymentRequest paymentRequest = new PaymentRequest() {
+                Amount = new Amount(Currency.EUR, "100.00"),
+                Description = "Description",
+                RedirectUrl = this.DefaultRedirectUrl,
+                Method = PaymentMethod.CreditCard
+            };
+
+            // When: We send the payment request to Mollie
+            PaymentResponse result = await this._paymentClient.CreatePaymentAsync(paymentRequest);
+
+            // Then: Make sure we get a valid response
+            Assert.IsNotNull(result);
+            Assert.AreEqual(paymentRequest.Amount.Currency, result.Amount.Currency);
+            Assert.AreEqual(paymentRequest.Amount.Value, result.Amount.Value);
+            Assert.AreEqual(paymentRequest.Description, result.Description);
+            Assert.AreEqual(paymentRequest.RedirectUrl, result.RedirectUrl);
+            Assert.AreEqual(paymentRequest.Method, result.Method);
+        }
+
+        [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
+        public async Task CanCreatePaymentWithMultiplePaymentMethods() {
+            // When: we create a payment request and specify multiple payment methods
+            PaymentRequest paymentRequest = new PaymentRequest() {
+                Amount = new Amount(Currency.EUR, "100.00"),
+                Description = "Description",
+                RedirectUrl = this.DefaultRedirectUrl,
+                Methods = new List<string>() {
+                    PaymentMethod.Ideal,
+                    PaymentMethod.CreditCard,
+                    PaymentMethod.DirectDebit
+                }
+            };
+
+            // When: We send the payment request to Mollie
+            PaymentResponse result = await this._paymentClient.CreatePaymentAsync(paymentRequest);
+
+            // Then: Make sure we get a valid response
+            Assert.IsNotNull(result);
+            Assert.AreEqual(paymentRequest.Amount.Currency, result.Amount.Currency);
+            Assert.AreEqual(paymentRequest.Amount.Value, result.Amount.Value);
+            Assert.AreEqual(paymentRequest.Description, result.Description);
+            Assert.AreEqual(paymentRequest.RedirectUrl, result.RedirectUrl);
+            Assert.IsNull(result.Method);
+        }
+
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         [TestCase(typeof(PaymentRequest), PaymentMethod.Bancontact, typeof(BancontactPaymentResponse))]
         [TestCase(typeof(PaymentRequest), PaymentMethod.Sofort, typeof(SofortPaymentResponse))]
         [TestCase(typeof(BankTransferPaymentRequest), PaymentMethod.BankTransfer, typeof(BankTransferPaymentResponse))]
         [TestCase(typeof(PayPalPaymentRequest), PaymentMethod.PayPal, typeof(PayPalPaymentResponse))]
-        [TestCase(typeof(BitcoinPaymentRequest), PaymentMethod.Bitcoin, typeof(BitcoinPaymentResponse))]
         [TestCase(typeof(PaymentRequest), PaymentMethod.Belfius, typeof(BelfiusPaymentResponse))]
         [TestCase(typeof(KbcPaymentRequest), PaymentMethod.Kbc, typeof(KbcPaymentResponse))]
         [TestCase(typeof(PaymentRequest), null, typeof(PaymentResponse))]
-        //[TestCase(typeof(Przelewy24PaymentRequest), PaymentMethod.Przelewy24, typeof(PaymentResponse))] // Payment option is not enabled in website profile
-        public async Task CanCreateSpecificPaymentType(Type paymentType, PaymentMethod? paymentMethod, Type expectedResponseType) {
-            // If: we create a specific payment type with some bank transfer specific values
-            PaymentRequest paymentRequest = (PaymentRequest) Activator.CreateInstance(paymentType);
+        public async Task CanCreateSpecificPaymentType(Type paymentType, string paymentMethod, Type expectedResponseType) {
+            // When: we create a specific payment type with some bank transfer specific values
+            PaymentRequest paymentRequest = (PaymentRequest)Activator.CreateInstance(paymentType);
             paymentRequest.Amount = new Amount(Currency.EUR, "100.00");
             paymentRequest.Description = "Description";
             paymentRequest.RedirectUrl = this.DefaultRedirectUrl;
             paymentRequest.Method = paymentMethod;
 
             // Set required billing email for Przelewy24
-            if (paymentRequest is Przelewy24PaymentRequest request)
-            {
+            if (paymentRequest is Przelewy24PaymentRequest request) {
                 request.BillingEmail = "example@example.com";
             }
 
@@ -142,8 +217,9 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreatePaymentAndRetrieveIt() {
-            // If: we create a new payment request
+            // When: we create a new payment request
             PaymentRequest paymentRequest = new PaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
                 Description = "Description",
@@ -165,8 +241,9 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreateRecurringPaymentAndRetrieveIt() {
-            // If: we create a new recurring payment
+            // When: we create a new recurring payment
             MandateResponse mandate = await this.GetFirstValidMandate();
             CustomerResponse customer = await this._customerClient.GetCustomerAsync(mandate.Links.Customer);
             PaymentRequest paymentRequest = new PaymentRequest() {
@@ -186,8 +263,9 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreatePaymentWithMetaData() {
-            // If: We create a payment with meta data
+            // When: We create a payment with meta data
             string metadata = "this is my metadata";
             PaymentRequest paymentRequest = new PaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
@@ -204,8 +282,9 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreatePaymentWithJsonMetaData() {
-            // If: We create a payment with meta data
+            // When: We create a payment with meta data
             string json = "{\"order_id\":\"4.40\"}";
             PaymentRequest paymentRequest = new PaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
@@ -218,12 +297,13 @@ namespace Mollie.Tests.Integration.Api {
             PaymentResponse result = await this._paymentClient.CreatePaymentAsync(paymentRequest);
 
             // Then: Make sure we get the same json result as metadata
-            Assert.AreEqual(json, result.Metadata);
+            Assert.IsTrue(this.IsJsonResultEqual(json, result.Metadata));
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreatePaymentWithCustomMetaDataClass() {
-            // If: We create a payment with meta data
+            // When: We create a payment with meta data
             CustomMetadataClass metadataRequest = new CustomMetadataClass() {
                 OrderId = 1,
                 Description = "Custom description"
@@ -247,8 +327,9 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task CanCreatePaymentWithMandate() {
-            // If: We create a payment with a mandate id
+            // When: We create a payment with a mandate id
             MandateResponse validMandate = await this.GetFirstValidMandate();
             CustomerResponse customer = await this._customerClient.GetCustomerAsync(validMandate.Links.Customer);
             PaymentRequest paymentRequest = new PaymentRequest() {
@@ -268,10 +349,11 @@ namespace Mollie.Tests.Integration.Api {
         }
 
         [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
         public async Task PaymentWithDifferentHttpInstance() {
-            // If: We create a PaymentClient with our own HttpClient instance
+            // When: We create a PaymentClient with our own HttpClient instance
             HttpClient myHttpClientInstance = new HttpClient();
-            PaymentClient paymentClient = new PaymentClient(this.ApiTestKey, myHttpClientInstance);
+            PaymentClient paymentClient = new PaymentClient(this.ApiKey, myHttpClientInstance);
             PaymentRequest paymentRequest = new PaymentRequest() {
                 Amount = new Amount(Currency.EUR, "100.00"),
                 Description = "Description",
@@ -281,12 +363,67 @@ namespace Mollie.Tests.Integration.Api {
             // When: I create a new payment
             PaymentResponse result = await paymentClient.CreatePaymentAsync(paymentRequest);
 
-            // Then: It should still work... lol
+            // Then: It should still work in the same way
             Assert.IsNotNull(result);
             Assert.AreEqual(paymentRequest.Amount.Currency, result.Amount.Currency);
             Assert.AreEqual(paymentRequest.Amount.Value, result.Amount.Value);
             Assert.AreEqual(paymentRequest.Description, result.Description);
             Assert.AreEqual(paymentRequest.RedirectUrl, result.RedirectUrl);
+        }
+
+        [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
+        public async Task CanCreatePaymentWithDecimalAmountAndRetrieveIt() {
+            // When: we create a new payment request
+            PaymentRequest paymentRequest = new PaymentRequest() {
+                Amount = new Amount(Currency.EUR, 100.1235m),
+                Description = "Description",
+                RedirectUrl = this.DefaultRedirectUrl,
+                Locale = Locale.de_DE
+            };
+
+            // When: We send the payment request to Mollie and attempt to retrieve it
+            PaymentResponse paymentResponse = await this._paymentClient.CreatePaymentAsync(paymentRequest);
+            PaymentResponse result = await this._paymentClient.GetPaymentAsync(paymentResponse.Id);
+
+            // Then
+            Assert.IsNotNull(result);
+            Assert.AreEqual(paymentResponse.Id, result.Id);
+            Assert.AreEqual(paymentResponse.Amount.Currency, result.Amount.Currency);
+            Assert.AreEqual(paymentResponse.Amount.Value, result.Amount.Value);
+            Assert.AreEqual(paymentResponse.Description, result.Description);
+            Assert.AreEqual(paymentResponse.RedirectUrl, result.RedirectUrl);
+        }
+
+        [Test]
+        [RetryOnApiRateLimitFailure(BaseMollieApiTestClass.NumberOfRetries)]
+        public async Task CanCreatePaymentWithImplicitAmountCastAndRetrieveIt() {
+            var initialAmount = 100.75m;
+
+            // When: we create a new payment request
+            PaymentRequest paymentRequest = new PaymentRequest() {
+                Amount = new Amount(Currency.EUR, initialAmount),
+                Description = "Description",
+                RedirectUrl = this.DefaultRedirectUrl,
+                Locale = Locale.de_DE
+            };
+
+            // When: We send the payment request to Mollie and attempt to retrieve it
+            PaymentResponse paymentResponse = await this._paymentClient.CreatePaymentAsync(paymentRequest);
+            PaymentResponse result = await this._paymentClient.GetPaymentAsync(paymentResponse.Id);
+
+            decimal responseAmount = paymentResponse.Amount; // Implicit cast
+            decimal resultAmount = result.Amount; // Implicit cast
+
+            // Then
+            Assert.IsNotNull(result);
+            Assert.AreEqual(paymentResponse.Id, result.Id);
+            Assert.AreEqual(paymentResponse.Amount.Currency, result.Amount.Currency);
+            Assert.AreEqual(paymentResponse.Amount.Value, result.Amount.Value);
+            Assert.AreEqual(responseAmount, resultAmount);
+            Assert.AreEqual(initialAmount, resultAmount);
+            Assert.AreEqual(paymentResponse.Description, result.Description);
+            Assert.AreEqual(paymentResponse.RedirectUrl, result.RedirectUrl);
         }
 
         private async Task<MandateResponse> GetFirstValidMandate() {
